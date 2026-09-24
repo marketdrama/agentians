@@ -1,34 +1,110 @@
 import type { Agent, FeedItem, Fnf, Post, Token } from "@/lib/types";
 import { SEED_AGENTS, SEED_FNFS, SEED_POSTS, SEED_TOKENS } from "./seed";
 import { synthPost } from "./generator";
+import { createMarketAdapter, type MarketToken } from "@/lib/market/index";
+import { createPortfolio, valuate, type Portfolio, type Valuation } from "@/lib/paper/index";
 
 /**
  * In-memory store — the runtime data layer for the demo. Cached on globalThis so
  * it survives Next.js hot-reloads. In production this is replaced by Supabase
  * (see lib/supabase + supabase/migrations); the read/write shape below is the
  * contract that adapter must satisfy.
+ *
+ * BLOCK-01 (lib/market) feeds real pump.fun/Solana prices into `tokens` via
+ * refreshMarketTokens(); BLOCK-02 (lib/paper) runs each agent's paper portfolio.
  */
 interface Store {
   tokens: Token[];
   fnfs: Fnf[];
   agents: Agent[];
   posts: Post[];
+  portfolios: Record<string, Portfolio>; // keyed by agent id
 }
 
 const g = globalThis as unknown as { __agentiansStore?: Store };
 
 function initStore(): Store {
+  const agents = [...SEED_AGENTS];
+  const portfolios: Record<string, Portfolio> = {};
+  for (const a of agents) portfolios[a.id] = createPortfolio(a.paperBalanceUsd);
   return {
     tokens: [...SEED_TOKENS],
     fnfs: [...SEED_FNFS],
-    agents: [...SEED_AGENTS],
+    agents,
     posts: [...SEED_POSTS],
+    portfolios,
   };
+}
+
+// ---- BLOCK-01 market adapter (singleton; provider from MARKET_PROVIDER env) ----
+const gm = globalThis as unknown as { __agentiansAdapter?: ReturnType<typeof createMarketAdapter> };
+function adapter() {
+  if (!gm.__agentiansAdapter) gm.__agentiansAdapter = createMarketAdapter();
+  return gm.__agentiansAdapter;
+}
+
+/** Map a BLOCK-01 MarketToken onto the app's Token shape. */
+function toToken(m: MarketToken): Token {
+  return {
+    id: "t_" + m.mint,
+    mint: m.mint,
+    symbol: m.symbol,
+    name: m.name,
+    imageColor: m.imageColor,
+    priceUsd: m.priceUsd,
+    volume24h: m.volume24h,
+    liquidityUsd: m.liquidityUsd,
+    change24h: m.change24h,
+    updatedAt: m.updatedAt,
+  };
+}
+
+/**
+ * Pull live trending tokens and replace the cache. Soft-fail: on an empty
+ * result (network/rate-limit/parse error) the existing seed tokens are kept.
+ */
+export async function refreshMarketTokens(limit = 30): Promise<number> {
+  const live = await adapter().getTrendingTokens(limit);
+  if (!live.length) return 0;
+  store().tokens = live.map(toToken);
+  return live.length;
+}
+
+/** Current price keyed by mint, for the paper engine. */
+export function priceByMint(): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const t of store().tokens) if (t.mint && t.priceUsd > 0) out[t.mint] = t.priceUsd;
+  return out;
+}
+
+export function getPortfolio(agentId: string): Portfolio {
+  const s = store();
+  if (!s.portfolios[agentId]) {
+    const a = s.agents.find((x) => x.id === agentId);
+    s.portfolios[agentId] = createPortfolio(a?.paperBalanceUsd ?? 1000);
+  }
+  return s.portfolios[agentId];
+}
+
+export function setPortfolio(agentId: string, p: Portfolio): void {
+  store().portfolios[agentId] = p;
+}
+
+/** Mark an agent's paper book to market with current prices. */
+export function getAgentValuation(agentId: string): Valuation {
+  const a = store().agents.find((x) => x.id === agentId);
+  return valuate(getPortfolio(agentId), priceByMint(), a?.paperBalanceUsd ?? 1000);
 }
 
 export function store(): Store {
   if (!g.__agentiansStore) g.__agentiansStore = initStore();
-  return g.__agentiansStore;
+  const s = g.__agentiansStore;
+  // backfill for stores cached before `portfolios` existed (HMR / older sessions)
+  if (!s.portfolios) {
+    s.portfolios = {};
+    for (const a of s.agents) s.portfolios[a.id] = createPortfolio(a.paperBalanceUsd);
+  }
+  return s;
 }
 
 // ---- reads ----
@@ -93,6 +169,7 @@ export function getAgentPosts(agentId: string, limit = 40): FeedItem[] {
 // ---- writes ----
 export function addAgent(a: Agent): Agent {
   store().agents.unshift(a);
+  store().portfolios[a.id] = createPortfolio(a.paperBalanceUsd);
   const fnf = getFnfById(a.fnfId);
   if (fnf) fnf.memberCount += 1;
   return a;

@@ -1,6 +1,17 @@
 import type { Post } from "@/lib/types";
-import { addPost, getAgentById, getAgents, getTokens, store } from "@/lib/data/store";
+import {
+  addPost,
+  getAgentById,
+  getAgents,
+  getPortfolio,
+  getTokens,
+  priceByMint,
+  refreshMarketTokens,
+  setPortfolio,
+  store,
+} from "@/lib/data/store";
 import { synthPost } from "@/lib/data/generator";
+import { buy, sell, valuate } from "@/lib/paper/index";
 import { agentDecision, hasOpenRouter } from "@/lib/openrouter";
 import { pseudoTx } from "@/lib/utils";
 
@@ -15,17 +26,18 @@ function marketSnapshot(): string {
     .join("\n");
 }
 
-/** Turn an OpenRouter decision into a stored Post + apply paper-trade effects. */
-function applyDecision(agentId: string, fnfId: string | null, d: NonNullable<Awaited<ReturnType<typeof agentDecision>>>): Post {
+/** Build a Post skeleton from an OpenRouter decision (paper effects applied later). */
+function postFromDecision(
+  agentId: string,
+  fnfId: string | null,
+  d: NonNullable<Awaited<ReturnType<typeof agentDecision>>>,
+): Post {
   const id = `p_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
   const createdAt = new Date().toISOString();
 
   if (d.type === "TRADE" && d.trade) {
     const tok = getTokens().find((t) => t.symbol.toUpperCase() === d.trade!.symbol.toUpperCase());
     const usd = Math.max(1, Math.min(100, Number(d.trade.usd) || 5));
-    const pnl = d.trade.side === "SELL" ? +(usd * (Math.random() * 2 - 0.6)).toFixed(2) : null;
-    const agent = getAgentById(agentId);
-    if (agent && pnl !== null) agent.pnlUsd = +(agent.pnlUsd + pnl).toFixed(2);
     return {
       id,
       agentId,
@@ -39,7 +51,7 @@ function applyDecision(agentId: string, fnfId: string | null, d: NonNullable<Awa
         tokenColor: tok?.imageColor ?? "#8b93a1",
         usdAmount: usd,
         priceUsd: tok?.priceUsd ?? 0,
-        pnlUsd: pnl,
+        pnlUsd: null,
         pseudoTx: pseudoTx(),
       },
     };
@@ -61,22 +73,66 @@ function applyDecision(agentId: string, fnfId: string | null, d: NonNullable<Awa
   return { id, agentId, fnfId, type: "NOTE", body: d.body.slice(0, 400), createdAt };
 }
 
+/**
+ * Apply a TRADE post to the agent's BLOCK-02 paper portfolio at the live
+ * BLOCK-01 price, then recompute the agent's cached PnL from a fresh valuation.
+ * No-ops safely if the token/price isn't available (paper engine soft-fails).
+ */
+function applyPaperTrade(agentId: string, post: Post, prices: Record<string, number>): void {
+  const agent = getAgentById(agentId);
+  if (post.type === "TRADE" && post.trade) {
+    const tok = getTokens().find(
+      (x) => x.symbol.toUpperCase() === post.trade!.tokenSymbol.toUpperCase(),
+    );
+    if (tok?.mint && tok.priceUsd > 0) {
+      post.trade.priceUsd = tok.priceUsd;
+      post.trade.tokenColor = tok.imageColor;
+      const pf = getPortfolio(agentId);
+      if (post.trade.side === "BUY") {
+        const { portfolio } = buy(pf, {
+          mint: tok.mint,
+          symbol: tok.symbol,
+          priceUsd: tok.priceUsd,
+          usdAmount: post.trade.usdAmount,
+        });
+        setPortfolio(agentId, portfolio);
+        post.trade.pnlUsd = null;
+      } else {
+        const { portfolio, fill } = sell(pf, {
+          mint: tok.mint,
+          priceUsd: tok.priceUsd,
+          usdAmount: post.trade.usdAmount,
+        });
+        setPortfolio(agentId, portfolio);
+        post.trade.pnlUsd = fill ? +fill.realizedPnlUsd.toFixed(2) : null;
+      }
+    }
+  }
+  if (agent) {
+    agent.pnlUsd = +valuate(getPortfolio(agentId), prices, agent.paperBalanceUsd).totalPnlUsd.toFixed(2);
+  }
+}
+
 export interface TickResult {
   posted: number;
   usedOpenRouter: boolean;
+  liveTokens: number;
   postIds: string[];
 }
 
 /**
- * One runtime tick: pick a batch of active agents and produce a post each.
- * Uses OpenRouter when configured; otherwise falls back to the local synthesizer
- * so the board stays alive in any environment.
+ * One runtime tick:
+ *  1. refresh live market data (BLOCK-01) — seed tokens stay on soft-fail
+ *  2. pick a batch of active agents, each produces a post (OpenRouter or synth)
+ *  3. apply TRADE posts to paper portfolios (BLOCK-02) + recompute PnL
  */
 export async function runTick(batch = 3): Promise<TickResult> {
-  const active = getAgents().filter((a) => a.status === "active");
-  if (active.length === 0) return { posted: 0, usedOpenRouter: false, postIds: [] };
+  const liveTokens = await refreshMarketTokens(30);
+  const prices = priceByMint();
 
-  // rotate through agents pseudo-randomly
+  const active = getAgents().filter((a) => a.status === "active");
+  if (active.length === 0) return { posted: 0, usedOpenRouter: false, liveTokens, postIds: [] };
+
   const chosen = [...active].sort(() => Math.random() - 0.5).slice(0, Math.min(batch, active.length));
   const snapshot = marketSnapshot();
   const postIds: string[] = [];
@@ -93,16 +149,16 @@ export async function runTick(batch = 3): Promise<TickResult> {
       });
       if (decision) {
         usedOpenRouter = true;
-        post = applyDecision(agent.id, agent.fnfId, decision);
+        post = postFromDecision(agent.id, agent.fnfId, decision);
       }
     }
     if (!post) {
-      const s = store();
-      post = synthPost([agent], s.tokens);
+      post = synthPost([agent], store().tokens);
     }
+    applyPaperTrade(agent.id, post, prices);
     addPost(post);
     postIds.push(post.id);
   }
 
-  return { posted: postIds.length, usedOpenRouter, postIds };
+  return { posted: postIds.length, usedOpenRouter, liveTokens, postIds };
 }
