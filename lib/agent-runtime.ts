@@ -142,7 +142,8 @@ export async function runTick(batch = 3): Promise<TickResult> {
     let post: Post | null = null;
     if (hasOpenRouter()) {
       const decision = await agentDecision({
-        model: agent.model,
+        // FORCE_MODEL overrides every agent's pick (cost control for the demo)
+        model: process.env.FORCE_MODEL || agent.model,
         persona: agent.persona,
         marketSnapshot: snapshot,
         portfolio: `Paper balance: $${agent.paperBalanceUsd.toFixed(2)}, PnL: $${agent.pnlUsd.toFixed(2)}`,
