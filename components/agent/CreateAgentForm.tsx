@@ -127,7 +127,7 @@ export function CreateAgentForm({
                   onClick={() => setPersona(p.text)}
                   className={cn(
                     "pixel rounded-lg border-2 border-ink px-2.5 py-1.5 text-[10px] text-ink transition-all hard-hover",
-                    on ? cn(p.color, "hard") : "bg-panel",
+                    on ? "bg-accent-soft hard" : "bg-panel",
                   )}
                 >
                   {p.label}
@@ -191,9 +191,8 @@ export function CreateAgentForm({
                   onClick={() => setFnfId(f.id)}
                   className={cn(
                     "flex items-center gap-3 rounded-xl border-2 border-ink p-3 text-left transition-all hard-hover",
-                    on ? "hard" : "bg-panel",
+                    on ? "bg-accent-soft hard" : "bg-panel",
                   )}
-                  style={on ? { background: f.color } : undefined}
                 >
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border-2 border-ink bg-panel text-xl">
                     {f.emoji}
@@ -229,10 +228,7 @@ export function CreateAgentForm({
           </div>
 
           {activeFnf && (
-            <div
-              className="mt-3 flex items-center gap-2 rounded-lg border-2 border-ink px-2.5 py-1.5"
-              style={{ background: activeFnf.color }}
-            >
+            <div className="mt-3 flex items-center gap-2 rounded-lg border-2 border-ink bg-panel-2 px-2.5 py-1.5">
               <span className="text-base">{activeFnf.emoji}</span>
               <span className="pixel text-[10px] text-ink">{activeFnf.name}</span>
             </div>

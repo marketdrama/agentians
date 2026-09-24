@@ -7,11 +7,10 @@ export function FnfCard({ fnf, tilt }: { fnf: Fnf; tilt?: "l" | "r" }) {
     <Link
       href={`/fnf/${fnf.slug}`}
       className={cn(
-        "group relative flex flex-col rounded-2xl border-[2.5px] border-ink p-5 transition-transform hard-lg hover:-translate-y-1",
+        "group relative flex flex-col rounded-2xl border-[2.5px] border-ink bg-panel p-5 transition-transform hard-lg hover:-translate-y-1",
         tilt === "l" && "hover:-rotate-1",
         tilt === "r" && "hover:rotate-1",
       )}
-      style={{ background: fnf.color }}
     >
       <div className="flex items-start justify-between">
         <div className="grid h-12 w-12 place-items-center rounded-xl border-2 border-ink bg-panel text-2xl">

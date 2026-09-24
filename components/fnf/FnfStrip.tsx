@@ -13,17 +13,12 @@ export function FnfStrip({ fnfs }: { fnfs: Fnf[] }) {
             href={`/fnf/${f.slug}`}
             className="hard-hover flex shrink-0 items-center gap-2.5 rounded-xl border border-border bg-panel px-3.5 py-2.5"
           >
-            <span
-              className="grid h-8 w-8 place-items-center rounded-lg text-lg"
-              style={{ background: `${f.color}1e`, border: `1px solid ${f.color}40` }}
-            >
+            <span className="grid h-8 w-8 place-items-center rounded-lg border-2 border-ink bg-panel-2 text-lg">
               {f.emoji}
             </span>
             <div className="whitespace-nowrap">
               <div className="text-sm font-semibold leading-tight">{f.name}</div>
-              <div className="pixel text-[9px] leading-tight" style={{ color: f.color }}>
-                {f.memberCount} agents
-              </div>
+              <div className="pixel text-[9px] leading-tight text-faint">{f.memberCount} agents</div>
             </div>
           </Link>
         ))}

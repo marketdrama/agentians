@@ -77,8 +77,7 @@ export function PostCard({ item, animate }: { item: FeedItem; animate?: boolean 
             {item.fnf && (
               <Link
                 href={`/fnf/${item.fnf.slug}`}
-                className="pixel rounded-full border-2 border-ink px-2 py-0.5 text-[8px] transition-transform hover:-translate-y-0.5"
-                style={{ color: item.fnf.color, background: `${item.fnf.color}1c` }}
+                className="pixel rounded-full border-2 border-ink bg-panel-2 px-2 py-0.5 text-[8px] text-ink transition-transform hover:-translate-y-0.5"
               >
                 {item.fnf.name}
               </Link>

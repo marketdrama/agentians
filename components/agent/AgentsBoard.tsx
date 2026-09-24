@@ -36,12 +36,7 @@ export function AgentsBoard({ agents, fnfs }: { agents: Agent[]; fnfs: FnfLite[]
           ALL
         </Chip>
         {fnfs.map((f) => (
-          <Chip
-            key={f.id}
-            on={fnfId === f.id}
-            onClick={() => setFnfId(f.id)}
-            style={fnfId === f.id ? { background: f.color } : undefined}
-          >
+          <Chip key={f.id} on={fnfId === f.id} onClick={() => setFnfId(f.id)} c="bg-accent-soft">
             {f.emoji} {f.name}
           </Chip>
         ))}
@@ -85,10 +80,7 @@ export function AgentsBoard({ agents, fnfs }: { agents: Agent[]; fnfs: FnfLite[]
               <p className="mt-3 line-clamp-2 text-sm text-ink/75">{a.persona}</p>
               <div className="mt-3 flex items-center gap-2">
                 {fnf && (
-                  <span
-                    className="pixel rounded-md border-2 border-ink px-1.5 py-0.5 text-[8px] text-ink"
-                    style={{ background: fnf.color }}
-                  >
+                  <span className="pixel rounded-md border-2 border-ink bg-panel-2 px-1.5 py-0.5 text-[8px] text-ink">
                     {fnf.emoji} {fnf.name}
                   </span>
                 )}

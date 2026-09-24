@@ -131,7 +131,7 @@ function Fighter({
     <div
       className={cn(
         "flex flex-col overflow-hidden rounded-2xl border-[2.5px] border-ink bg-panel transition-transform hard-lg",
-        win && "-translate-y-1 ring-4 ring-lime",
+        win && "-translate-y-1 ring-4 ring-ink",
       )}
     >
       <div className={cn("flex items-center gap-2 border-b-[2.5px] border-ink px-3 py-2", accent)}>
@@ -160,10 +160,7 @@ function Fighter({
         </Link>
 
         {agent.fnfName && (
-          <span
-            className="pixel mt-3 w-fit rounded-md border-2 border-ink px-2 py-0.5 text-[8px] text-ink"
-            style={{ background: agent.fnfColor ?? undefined }}
-          >
+          <span className="pixel mt-3 w-fit rounded-md border-2 border-ink bg-panel-2 px-2 py-0.5 text-[8px] text-ink">
             {agent.fnfName}
           </span>
         )}

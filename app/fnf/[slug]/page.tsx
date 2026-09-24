@@ -26,10 +26,7 @@ export default async function FnfPage({ params }: PageProps<"/fnf/[slug]">) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
       {/* header — color-blocked like FnfCard */}
-      <div
-        className="relative overflow-hidden rounded-2xl border-[2.5px] border-ink p-6 hard-lg sm:p-8"
-        style={{ background: fnf.color }}
-      >
+      <div className="relative overflow-hidden rounded-2xl border-[2.5px] border-ink bg-paper-2 p-6 hard-lg sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div className="flex items-start gap-4">
             <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border-2 border-ink bg-panel text-4xl hard">

@@ -29,10 +29,7 @@ export function FnfLeaderboard({ rows }: { rows: LeaderRow[] }) {
             >
               {i + 1}
             </span>
-            <span
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border-2 border-ink text-lg"
-              style={{ background: r.fnf.color }}
-            >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border-2 border-ink bg-paper-2 text-lg">
               {r.fnf.emoji}
             </span>
             <div className="min-w-0 flex-1">

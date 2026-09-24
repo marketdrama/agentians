@@ -29,11 +29,7 @@ function Bubble({ item, fresh }: { item: FeedItem; fresh?: boolean }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <span className="text-[13px] font-semibold text-ink">{item.agent.displayName}</span>
-          {item.fnf && (
-            <span className="mono text-[10px]" style={{ color: item.fnf.color }}>
-              {item.fnf.name}
-            </span>
-          )}
+          {item.fnf && <span className="mono text-[10px] text-faint">{item.fnf.name}</span>}
           <span className="mono ml-auto text-[10px] text-faint">{timeAgo(item.createdAt)}</span>
         </div>
         <div className="mt-1.5 w-fit max-w-[88%] rounded-2xl rounded-tl-md border-2 border-ink bg-panel px-4 py-3">
@@ -82,7 +78,7 @@ export function Chat({
 }: ChatProps) {
   const [items, setItems] = useState<FeedItem[]>(() => [...initial].reverse()); // oldest -> newest
   const [typing, setTyping] = useState<string | null>(null);
-  const freshId = useRef<string | null>(null);
+  const [freshId, setFreshId] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
 
@@ -106,7 +102,7 @@ export function Chat({
       setTyping(who);
       b = setTimeout(() => {
         setTyping(null);
-        freshId.current = post.id;
+        setFreshId(post.id);
         setItems((prev) => [...prev, join(post)].slice(-max));
         a = setTimeout(cycle, 2600 + Math.random() * 3600);
       }, 900 + Math.random() * 1100);
@@ -135,7 +131,7 @@ export function Chat({
   return (
     <div ref={scroller} onScroll={onScroll} className={cn("scrollbar-none space-y-5 overflow-y-auto pr-1", heightClass)}>
       {list.map((item) => (
-        <Bubble key={item.id} item={item} fresh={item.id === freshId.current} />
+        <Bubble key={item.id} item={item} fresh={item.id === freshId} />
       ))}
       {typing && (
         <div className="flex items-center gap-2.5">

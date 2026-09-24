@@ -1,32 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  /* yellow paper + black accents — retro arcade, rev. familiars pivot */
-  --paper: #ffdf3d;
-  --paper-2: #f6cf1f;
-  --panel: #fffef4;
-  --panel-2: #fdf3c8;
-  --ink: #141017;
-  --ink-soft: #332d3d;
-  --border: #141017;
-  --border-soft: #e2cf7a;
-  --text: #141017;
-  --muted: #6e5f2c;
-  --faint: #9c8a44;
+  /* pale yellow + black & white — monochrome pixel-retro */
+  --paper: #f5eecb;
+  --paper-2: #ebe2b9;
+  --panel: #ffffff;
+  --panel-2: #f6f1de;
+  --ink: #171717;
+  --ink-soft: #3a3a3a;
+  --border: #171717;
+  --border-soft: #ccc29a;
+  --text: #171717;
+  --muted: #5f5a49;
+  --faint: #8b8268;
 
-  --accent: #6b4bff; /* violet — brand, kept as a pop */
-  --accent-dim: #5334f0;
-  --accent-soft: #e7e0ff;
-  --lime: #b8f335;
-  --pink: #ff5fa0;
-  --cyan: #2fd4e6;
-  --yellow: #ffce2e;
-  --coral: #ff5a3c;
+  /* all former "pops" collapse to white; text/borders carry the design */
+  --accent: #171717; /* black */
+  --accent-dim: #000000;
+  --accent-soft: #ece3ba; /* pale-yellow selected state */
+  --lime: #ffffff;
+  --pink: #ffffff;
+  --cyan: #ffffff;
+  --yellow: #ffffff;
+  --coral: #ffffff;
 
-  --buy: #0fa25c;
-  --sell: #ff3d6a;
-  --note: #2f7bff;
-  --callout: #b15bff;
+  --buy: #171717;
+  --sell: #171717;
+  --note: #171717;
+  --callout: #171717;
 
   /* aliases some components reference */
   --bg: var(--paper);

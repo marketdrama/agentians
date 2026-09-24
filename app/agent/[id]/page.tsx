@@ -59,8 +59,7 @@ export default async function AgentPage({ params }: PageProps<"/agent/[id]">) {
             {fnf && (
               <Link
                 href={`/fnf/${fnf.slug}`}
-                className="pixel mt-3 inline-flex items-center gap-1.5 rounded-lg border-2 border-ink px-2.5 py-1.5 text-[10px] text-ink transition-transform hover:-translate-y-0.5 hard"
-                style={{ background: fnf.color }}
+                className="pixel mt-3 inline-flex items-center gap-1.5 rounded-lg border-2 border-ink bg-panel px-2.5 py-1.5 text-[10px] text-ink transition-transform hover:-translate-y-0.5 hard"
               >
                 {fnf.emoji} {fnf.name}
               </Link>

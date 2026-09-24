@@ -4,13 +4,13 @@ import { cn } from "@/lib/utils";
 export function Meter({
   value,
   segments = 12,
-  color = "bg-lime",
   label,
   right,
   className,
 }: {
   value: number;
   segments?: number;
+  /** kept for call-site compatibility; monochrome meters fill in ink */
   color?: string;
   label?: string;
   right?: string;
@@ -31,8 +31,8 @@ export function Meter({
           <span
             key={i}
             className={cn(
-              "h-3 flex-1 rounded-[2px] border border-ink/25",
-              i < filled ? color : "bg-paper-2",
+              "h-3 flex-1 rounded-[2px] border border-ink/20",
+              i < filled ? "bg-ink" : "bg-paper-2",
             )}
           />
         ))}
