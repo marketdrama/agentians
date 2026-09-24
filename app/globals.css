@@ -1,19 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #f0e9d8;
-  --paper-2: #e6dcc4;
-  --panel: #fffdf6;
-  --panel-2: #f7f1e2;
-  --ink: #17121f;
-  --ink-soft: #3a3348;
-  --border: #17121f;
-  --border-soft: #d8cdb4;
-  --text: #17121f;
-  --muted: #6a6172;
-  --faint: #9a917f;
+  /* yellow paper + black accents — retro arcade, rev. familiars pivot */
+  --paper: #ffdf3d;
+  --paper-2: #f6cf1f;
+  --panel: #fffef4;
+  --panel-2: #fdf3c8;
+  --ink: #141017;
+  --ink-soft: #332d3d;
+  --border: #141017;
+  --border-soft: #e2cf7a;
+  --text: #141017;
+  --muted: #6e5f2c;
+  --faint: #9c8a44;
 
-  --accent: #6b4bff; /* violet — brand */
+  --accent: #6b4bff; /* violet — brand, kept as a pop */
   --accent-dim: #5334f0;
   --accent-soft: #e7e0ff;
   --lime: #b8f335;
@@ -22,7 +23,7 @@
   --yellow: #ffce2e;
   --coral: #ff5a3c;
 
-  --buy: #12b869;
+  --buy: #0fa25c;
   --sell: #ff3d6a;
   --note: #2f7bff;
   --callout: #b15bff;

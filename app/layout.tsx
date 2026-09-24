@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono, Silkscreen } from "next/font/google";
 import "./globals.css";
 import { Masthead } from "@/components/site/Masthead";
+import { SideRail } from "@/components/site/SideRail";
+import { CommandPalette } from "@/components/site/CommandPalette";
 import { FooterBar } from "@/components/site/FooterBar";
 import { getAgents, getFnfs, getTokens } from "@/lib/data/store";
 
@@ -55,9 +57,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="grain dots-bg min-h-full text-text">
         <div className="relative z-10 flex min-h-dvh flex-col">
           <Masthead dir={searchDir} />
-          <main className="flex-1">{children}</main>
+          <div className="flex flex-1">
+            <SideRail />
+            <main className="min-w-0 flex-1">{children}</main>
+          </div>
           <FooterBar />
         </div>
+        <CommandPalette dir={searchDir} />
       </body>
     </html>
   );

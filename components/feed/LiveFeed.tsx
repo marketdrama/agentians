@@ -41,12 +41,15 @@ export function LiveFeed({
   fnfDir,
   showTabs = true,
   live = true,
-  max = 60,
+  max = 300,
 }: LiveFeedProps) {
   const [items, setItems] = useState<FeedItem[]>(initial);
   const [tab, setTab] = useState<"ALL" | PostType>("ALL");
   const [paused, setPaused] = useState(false);
-  const newestId = useRef<string | null>(null);
+  const [newestId, setNewestId] = useState<string | null>(null);
+  const oldest = useRef<number>(
+    initial.length ? +new Date(initial[initial.length - 1].createdAt) : NaN,
+  );
 
   const join = useCallback(
     (p: Post): FeedItem => {
@@ -62,18 +65,51 @@ export function LiveFeed({
     [agentDir, fnfDir],
   );
 
+  // live: prepend fresh posts, keeping the head bounded so memory stays sane
   useEffect(() => {
     if (!live || paused || genAgents.length === 0 || genTokens.length === 0) return;
     let timer: ReturnType<typeof setTimeout>;
     const tick = () => {
       const post = synthPost(genAgents, genTokens);
-      newestId.current = post.id;
-      setItems((prev) => [join(post), ...prev].slice(0, max));
+      setNewestId(post.id);
+      setItems((prev) => [join(post), ...prev].slice(0, 500));
       timer = setTimeout(tick, 3200 + Math.random() * 4200);
     };
     timer = setTimeout(tick, 2600 + Math.random() * 2600);
     return () => clearTimeout(timer);
-  }, [live, paused, genAgents, genTokens, join, max]);
+  }, [live, paused, genAgents, genTokens, join]);
+
+  // append a page of older (synthesized) posts — shared by scroll + the button
+  const loadMore = useCallback(() => {
+    if (genAgents.length === 0 || genTokens.length === 0) return;
+    if (Number.isNaN(oldest.current)) oldest.current = Date.now();
+    setItems((prev) => {
+      if (prev.length >= max) return prev;
+      const batch: FeedItem[] = [];
+      for (let i = 0; i < 8; i++) {
+        oldest.current -= 60_000 + Math.floor(Math.random() * 240_000);
+        const p = synthPost(genAgents, genTokens);
+        batch.push(join({ ...p, createdAt: new Date(oldest.current).toISOString() }));
+      }
+      return [...prev, ...batch];
+    });
+  }, [genAgents, genTokens, join, max]);
+
+  // infinite scroll: auto-load as the page nears the bottom
+  useEffect(() => {
+    let last = 0;
+    const onScroll = () => {
+      const now = Date.now();
+      if (now - last < 250) return;
+      const nearBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 900;
+      if (!nearBottom) return;
+      last = now;
+      loadMore();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [loadMore]);
 
   const filtered = useMemo(
     () => (tab === "ALL" ? items : items.filter((i) => i.type === tab)),
@@ -111,7 +147,7 @@ export function LiveFeed({
 
       <div className="space-y-3">
         {filtered.map((item) => (
-          <PostCard key={item.id} item={item} animate={item.id === newestId.current} />
+          <PostCard key={item.id} item={item} animate={item.id === newestId} />
         ))}
         {filtered.length === 0 && (
           <div className="card p-8 text-center text-sm text-muted">
@@ -119,6 +155,24 @@ export function LiveFeed({
           </div>
         )}
       </div>
+
+      {/* infinite scroll: auto-loads on scroll; button is the manual fallback */}
+      {filtered.length > 0 && (
+        <div className="mt-4 flex items-center justify-center py-4">
+          {items.length < max ? (
+            <button
+              type="button"
+              onClick={loadMore}
+              className="pixel inline-flex items-center gap-2 rounded-lg border-2 border-ink bg-panel px-3 py-2 text-[9px] text-ink transition-all hard-hover"
+            >
+              <span className="live-dot h-2 w-2 rounded-full border border-ink bg-buy" />
+              LOAD MORE THESES
+            </button>
+          ) : (
+            <span className="pixel text-[9px] text-faint">— END OF TAPE —</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

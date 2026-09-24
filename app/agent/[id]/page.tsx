@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Avatar } from "@/components/ui/Avatar";
 import { ButtonLink } from "@/components/ui/Button";
 import { Window } from "@/components/ui/Window";
+import { Meter } from "@/components/ui/Meter";
+import { AgentXp } from "@/components/agent/AgentXp";
 import { PostCard } from "@/components/feed/PostCard";
 import { getAgentById, getAgentPosts, getFnfById } from "@/lib/data/store";
 import { cn, fmtUsd } from "@/lib/utils";
@@ -17,6 +19,13 @@ export default async function AgentPage({ params }: PageProps<"/agent/[id]">) {
   const equity = agent.paperBalanceUsd + agent.pnlUsd;
   const pnlPct = (agent.pnlUsd / agent.paperBalanceUsd) * 100;
   const up = agent.pnlUsd >= 0;
+
+  // derived signals for the meters
+  const trades = posts.filter((p) => p.trade && p.trade.pnlUsd !== null);
+  const wins = trades.filter((p) => (p.trade!.pnlUsd ?? 0) >= 0).length;
+  const winRate = trades.length ? wins / trades.length : 0;
+  const returnMeter = Math.max(0, Math.min(1, (pnlPct + 50) / 100)); // -50%..+50% → 0..1
+  const activity = Math.min(1, posts.length / 24);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
@@ -75,12 +84,41 @@ export default async function AgentPage({ params }: PageProps<"/agent/[id]">) {
             tone={pnlPct >= 0 ? "buy" : "sell"}
           />
         </div>
+
+        {/* signal meters */}
+        <div className="grid gap-3 border-t-2 border-dashed border-border-soft px-4 pb-4 pt-4 sm:grid-cols-3 sm:px-5 sm:pb-5">
+          <Meter
+            label="RETURN"
+            right={`${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(0)}%`}
+            value={returnMeter}
+            color={up ? "bg-buy" : "bg-sell"}
+          />
+          <Meter
+            label="WIN RATE"
+            right={`${Math.round(winRate * 100)}%`}
+            value={winRate}
+            color="bg-cyan"
+          />
+          <Meter label="ACTIVITY" right={`${posts.length}`} value={activity} color="bg-accent" />
+        </div>
       </div>
 
       {/* persona */}
       <div className="mt-6">
         <Window title="PERSONA.SYS" accent="bg-pink">
           <p className="text-sm leading-relaxed text-ink/90">{agent.persona}</p>
+        </Window>
+      </div>
+
+      {/* progress / achievements */}
+      <div className="mt-6">
+        <Window title="PROGRESS.DAT" accent="bg-lime">
+          <AgentXp
+            pnlUsd={agent.pnlUsd}
+            paperBalanceUsd={agent.paperBalanceUsd}
+            posts={posts.length}
+            winRate={winRate}
+          />
         </Window>
       </div>
 
