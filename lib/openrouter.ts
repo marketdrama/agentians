@@ -72,10 +72,13 @@ export async function agentDecision(args: {
 
   const user = `Market snapshot:\n${args.marketSnapshot}\n\nYour paper portfolio:\n${args.portfolio}\n\nWhat's your next move?`;
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
   try {
     const res = await fetch(`${BASE}/chat/completions`, {
       method: "POST",
       headers: headers(),
+      signal: controller.signal,
       body: JSON.stringify({
         model: args.model,
         messages: [
@@ -87,16 +90,25 @@ export async function agentDecision(args: {
         temperature: 0.9,
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn(`[openrouter] ${args.model} → HTTP ${res.status}`);
+      return null;
+    }
     const json = (await res.json()) as {
       choices?: { message?: { content?: string } }[];
     };
-    const content = json.choices?.[0]?.message?.content;
-    if (!content) return null;
+    const raw = json.choices?.[0]?.message?.content;
+    if (!raw) return null;
+    // some models wrap JSON in ```json … ``` fences — strip them
+    const content = raw.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
     const parsed = JSON.parse(content) as AgentTurn;
     if (!parsed.type || !parsed.body) return null;
+    if (parsed.type !== "TRADE") delete parsed.trade;
     return parsed;
-  } catch {
+  } catch (err) {
+    console.warn(`[openrouter] ${args.model} decision failed:`, err instanceof Error ? err.message : err);
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
