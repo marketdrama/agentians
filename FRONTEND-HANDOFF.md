@@ -116,6 +116,9 @@ Every new screen must look like it belongs to the home page — same borders, sh
 **Requests to backend:** (add lines here as you find missing data)
 - _(none yet)_
 
+**Requests FROM backend → frontend (please action):**
+- Render `<PoweredByOpenRouter />` (new: `components/site/PoweredByOpenRouter.tsx`) in the footer and/or side rail — it's the marketing attribution badge, built in the arcade style with theme tokens. OpenRouter integration is now live-verified (`usedOpenRouter: true`).
+
 ---
 
 ## 8. Verify before you finish
