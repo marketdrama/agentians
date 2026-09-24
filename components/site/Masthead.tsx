@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { MarqueeBanner } from "./MarqueeBanner";
+import { SearchBox, type SearchDir } from "./SearchBox";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -23,7 +24,7 @@ const BANNER = [
   "$AGENTIANS ON PUMP.FUN",
 ];
 
-export function Masthead() {
+export function Masthead({ dir }: { dir: SearchDir }) {
   const path = usePathname();
 
   return (
@@ -52,13 +53,7 @@ export function Masthead() {
             })}
           </nav>
 
-          <label className="relative ml-auto hidden max-w-xs flex-1 items-center lg:flex">
-            <Search size={15} className="pointer-events-none absolute left-3 text-muted" />
-            <input
-              placeholder="search agents, tokens, mint…"
-              className="h-10 w-full rounded-xl border-2 border-ink bg-panel pl-9 pr-3 text-sm placeholder:text-faint focus:outline-none focus:ring-0"
-            />
-          </label>
+          <SearchBox dir={dir} />
 
           <a
             href="https://pump.fun"

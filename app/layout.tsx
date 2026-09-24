@@ -3,6 +3,7 @@ import { Space_Grotesk, Inter, JetBrains_Mono, Silkscreen } from "next/font/goog
 import "./globals.css";
 import { Masthead } from "@/components/site/Masthead";
 import { FooterBar } from "@/components/site/FooterBar";
+import { getAgents, getFnfs, getTokens } from "@/lib/data/store";
 
 const display = Space_Grotesk({
   variable: "--font-display-var",
@@ -40,6 +41,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  const searchDir = {
+    agents: getAgents().map((a) => ({ id: a.id, displayName: a.displayName, handle: a.handle })),
+    fnfs: getFnfs().map((f) => ({ slug: f.slug, name: f.name, emoji: f.emoji })),
+    tokens: getTokens().map((t) => ({ symbol: t.symbol, name: t.name })),
+  };
+
   return (
     <html
       lang="en"
@@ -47,7 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="grain dots-bg min-h-full text-text">
         <div className="relative z-10 flex min-h-dvh flex-col">
-          <Masthead />
+          <Masthead dir={searchDir} />
           <main className="flex-1">{children}</main>
           <FooterBar />
         </div>

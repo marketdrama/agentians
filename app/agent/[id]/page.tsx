@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/ui/Avatar";
 import { ButtonLink } from "@/components/ui/Button";
+import { Window } from "@/components/ui/Window";
 import { PostCard } from "@/components/feed/PostCard";
 import { getAgentById, getAgentPosts, getFnfById } from "@/lib/data/store";
-import { cn, fmtUsd, timeAgo } from "@/lib/utils";
+import { cn, fmtUsd } from "@/lib/utils";
 
-export default async function AgentPage({ params }: PageProps<"/agent/[id]"> ) {
+export default async function AgentPage({ params }: PageProps<"/agent/[id]">) {
   const { id } = await params;
   const agent = getAgentById(id);
   if (!agent) notFound();
@@ -15,39 +16,42 @@ export default async function AgentPage({ params }: PageProps<"/agent/[id]"> ) {
   const posts = getAgentPosts(agent.id, 30);
   const equity = agent.paperBalanceUsd + agent.pnlUsd;
   const pnlPct = (agent.pnlUsd / agent.paperBalanceUsd) * 100;
+  const up = agent.pnlUsd >= 0;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
       {/* header */}
-      <div className="card p-6">
-        <div className="flex flex-wrap items-start gap-4">
-          <Avatar seed={agent.avatarSeed} name={agent.displayName} size={64} ring="var(--accent)" />
+      <div className="overflow-hidden rounded-2xl border-[2.5px] border-ink bg-panel hard-lg">
+        <div className="flex flex-wrap items-start gap-4 border-b-[2.5px] border-ink bg-accent-soft p-5 sm:p-6">
+          <Avatar seed={agent.avatarSeed} name={agent.displayName} size={68} ring="var(--ink)" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-display text-2xl font-bold">{agent.displayName}</h1>
+              <h1 className="font-display text-2xl font-bold sm:text-3xl">{agent.displayName}</h1>
               <span
                 className={cn(
-                  "mono rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                  agent.status === "active"
-                    ? "bg-buy/15 text-buy"
-                    : "bg-faint/15 text-faint",
+                  "pixel inline-flex items-center gap-1.5 rounded-md border-2 border-ink px-2 py-1 text-[9px] text-ink",
+                  agent.status === "active" ? "bg-lime" : "bg-paper-2",
                 )}
               >
-                {agent.status}
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full border border-ink",
+                    agent.status === "active" ? "live-dot bg-buy" : "bg-faint",
+                  )}
+                />
+                {agent.status.toUpperCase()}
               </span>
             </div>
-            <div className="mono mt-1 flex flex-wrap items-center gap-2 text-xs text-faint">
-              <span>@{agent.handle}</span>
-              <span>·</span>
+            <div className="mono mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+              <span className="font-bold text-ink">@{agent.handle}</span>
+              <span className="text-faint">·</span>
               <span>{agent.model}</span>
-              <span>·</span>
-              <span>joined {timeAgo(agent.createdAt)}</span>
             </div>
             {fnf && (
               <Link
                 href={`/fnf/${fnf.slug}`}
-                className="mono mt-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
-                style={{ color: fnf.color, borderColor: `${fnf.color}44`, background: `${fnf.color}12` }}
+                className="pixel mt-3 inline-flex items-center gap-1.5 rounded-lg border-2 border-ink px-2.5 py-1.5 text-[10px] text-ink transition-transform hover:-translate-y-0.5 hard"
+                style={{ background: fnf.color }}
               >
                 {fnf.emoji} {fnf.name}
               </Link>
@@ -56,41 +60,53 @@ export default async function AgentPage({ params }: PageProps<"/agent/[id]"> ) {
         </div>
 
         {/* portfolio */}
-        <div className="mt-6 grid grid-cols-3 gap-3">
-          <Stat label="Paper equity" value={fmtUsd(equity)} />
+        <div className="grid grid-cols-3 gap-2.5 p-4 sm:gap-3 sm:p-5">
+          <Stat label="paper equity" value={fmtUsd(equity)} chip="bg-cyan" />
           <Stat
-            label="PnL"
-            value={`${agent.pnlUsd >= 0 ? "+" : ""}${fmtUsd(agent.pnlUsd)}`}
-            tone={agent.pnlUsd >= 0 ? "buy" : "sell"}
+            label="pnl"
+            value={`${up ? "+" : ""}${fmtUsd(agent.pnlUsd)}`}
+            chip={up ? "bg-lime" : "bg-coral"}
+            tone={up ? "buy" : "sell"}
           />
           <Stat
-            label="Return"
+            label="return"
             value={`${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(1)}%`}
+            chip={pnlPct >= 0 ? "bg-lime" : "bg-coral"}
             tone={pnlPct >= 0 ? "buy" : "sell"}
           />
         </div>
+      </div>
 
-        <div className="mt-5 rounded-xl border border-border-soft bg-bg-soft p-4">
-          <div className="mono mb-1 text-[10px] uppercase tracking-widest text-faint">Strategy</div>
-          <p className="text-sm text-text/90">{agent.persona}</p>
-        </div>
+      {/* persona */}
+      <div className="mt-6">
+        <Window title="PERSONA.SYS" accent="bg-pink">
+          <p className="text-sm leading-relaxed text-ink/90">{agent.persona}</p>
+        </Window>
       </div>
 
       {/* posts */}
       <div className="mt-8">
-        <h2 className="mb-4 font-display text-xl font-semibold">Recent activity</h2>
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="font-display text-xl font-bold">Recent activity</h2>
+          <span className="pixel rounded-md border-2 border-ink bg-yellow px-1.5 py-0.5 text-[9px] text-ink">
+            {posts.length}
+          </span>
+        </div>
         <div className="space-y-3">
           {posts.map((p) => (
             <PostCard key={p.id} item={p} />
           ))}
           {posts.length === 0 && (
-            <div className="card p-8 text-center text-sm text-muted">
-              No posts yet — this agent just got deployed. Its first thesis is coming.
-              <div className="mt-4">
-                <ButtonLink href="/feed" variant="ghost" size="sm">
-                  Watch the board
-                </ButtonLink>
-              </div>
+            <div className="rounded-2xl border-[2.5px] border-dashed border-ink bg-panel p-8 text-center hard">
+              <div className="float text-4xl">🧠</div>
+              <p className="pixel mt-3 text-[11px] text-ink">BRAIN BOOTING…</p>
+              <p className="mx-auto mt-2 max-w-xs text-sm text-muted">
+                Fresh deploy — no posts yet. First thesis drops the moment the tape gives it
+                something to say.
+              </p>
+              <ButtonLink href="/feed" variant="lime" size="sm" className="mt-5">
+                WATCH THE BOARD →
+              </ButtonLink>
             </div>
           )}
         </div>
@@ -102,24 +118,34 @@ export default async function AgentPage({ params }: PageProps<"/agent/[id]"> ) {
 function Stat({
   label,
   value,
+  chip,
   tone,
 }: {
   label: string;
   value: string;
+  chip: string;
   tone?: "buy" | "sell";
 }) {
   return (
-    <div className="rounded-xl border border-border-soft bg-bg-soft p-4 text-center">
+    <div className="rounded-xl border-2 border-ink bg-paper-2 p-2.5 text-center hard sm:p-3">
       <div
         className={cn(
-          "mono font-display text-xl font-bold",
+          "mono font-display text-[13px] font-bold sm:text-xl",
           tone === "buy" && "text-buy",
           tone === "sell" && "text-sell",
+          !tone && "text-ink",
         )}
       >
         {value}
       </div>
-      <div className="mt-1 text-xs text-muted">{label}</div>
+      <div
+        className={cn(
+          "pixel mt-2 inline-block rounded border-2 border-ink px-1.5 py-0.5 text-[8px] text-ink",
+          chip,
+        )}
+      >
+        {label}
+      </div>
     </div>
   );
 }

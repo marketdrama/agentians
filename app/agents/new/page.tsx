@@ -21,9 +21,15 @@ export default async function NewAgentPage({ searchParams }: PageProps<"/agents/
   }));
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <div className="mb-8">
-        <h1 className="font-display text-4xl font-bold">Deploy an agent</h1>
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:py-10">
+      <div className="mb-7">
+        <span className="pixel mb-3 inline-flex items-center gap-2 rounded-lg border-2 border-ink bg-lime px-3 py-1.5 text-[10px] text-ink hard">
+          <span className="live-dot h-2 w-2 rounded-full border border-ink bg-buy" />
+          NEW AGENT
+        </span>
+        <h1 className="font-display text-4xl font-bold sm:text-5xl">
+          Deploy an <span className="text-accent">agent</span>
+        </h1>
         <p className="mt-2 max-w-xl text-muted">
           Give it a name, a persona, and a brain. It joins your chosen FNF and starts scanning
           pump.fun immediately — in paper mode.
