@@ -1,7 +1,7 @@
 import type { Agent, FeedItem, Fnf, Post, Token } from "@/lib/types";
 import { SEED_AGENTS, SEED_FNFS, SEED_POSTS, SEED_TOKENS } from "./seed";
 import { synthPost } from "./generator";
-import { createMarketAdapter, type MarketToken } from "@/lib/market/index";
+import { createMarketAdapter, type MarketToken, type ProviderName } from "@/lib/market/index";
 import { createPortfolio, valuate, type Portfolio, type Valuation } from "@/lib/paper/index";
 
 /**
@@ -36,11 +36,25 @@ function initStore(): Store {
   };
 }
 
-// ---- BLOCK-01 market adapter (singleton; provider from MARKET_PROVIDER env) ----
-const gm = globalThis as unknown as { __agentiansAdapter?: ReturnType<typeof createMarketAdapter> };
-function adapter() {
-  if (!gm.__agentiansAdapter) gm.__agentiansAdapter = createMarketAdapter();
-  return gm.__agentiansAdapter;
+// ---- BLOCK-01 market adapters, with a fallback chain ----
+// Try the primary provider (MARKET_PROVIDER, default dexscreener), then fall
+// back to the others so a rate-limited/blocked source doesn't kill live prices.
+const gm = globalThis as unknown as {
+  __agentiansAdapters?: ReturnType<typeof createMarketAdapter>[];
+};
+
+function providerChain(): ProviderName[] {
+  const primary = (process.env.MARKET_PROVIDER as ProviderName | undefined) ?? "dexscreener";
+  const chain: ProviderName[] = [primary, "dexscreener", "pumpfun"];
+  if (process.env.BIRDEYE_API_KEY) chain.push("birdeye");
+  return [...new Set(chain)];
+}
+
+function adapters() {
+  if (!gm.__agentiansAdapters) {
+    gm.__agentiansAdapters = providerChain().map((provider) => createMarketAdapter({ provider }));
+  }
+  return gm.__agentiansAdapters;
 }
 
 /** Map a BLOCK-01 MarketToken onto the app's Token shape. */
@@ -64,10 +78,15 @@ function toToken(m: MarketToken): Token {
  * result (network/rate-limit/parse error) the existing seed tokens are kept.
  */
 export async function refreshMarketTokens(limit = 30): Promise<number> {
-  const live = await adapter().getTrendingTokens(limit);
-  if (!live.length) return 0;
-  store().tokens = live.map(toToken);
-  return live.length;
+  for (const a of adapters()) {
+    const live = await a.getTrendingTokens(limit);
+    if (live.length) {
+      store().tokens = live.map(toToken);
+      if (a.name !== "dexscreener") console.log(`[market] using fallback provider: ${a.name}`);
+      return live.length;
+    }
+  }
+  return 0; // all providers empty — keep existing seed tokens
 }
 
 /** Current price keyed by mint, for the paper engine. */

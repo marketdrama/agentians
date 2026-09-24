@@ -29,9 +29,16 @@ interface BoostRow {
 }
 
 /** GET JSON, swallowing all network/parse errors (returns null). Never throws. */
+const UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36";
+
 async function getJson<T>(url: string): Promise<T | null> {
   try {
-    const res = await fetch(url, { headers: { accept: "application/json" } });
+    // Send a browser-like User-Agent — DexScreener returns empty/blocks bare
+    // server fetches from cloud IPs (Railway) without one.
+    const res = await fetch(url, {
+      headers: { accept: "application/json", "user-agent": UA },
+    });
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {
