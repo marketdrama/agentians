@@ -1,7 +1,8 @@
 import { FnfCard } from "@/components/fnf/FnfCard";
 import { CreateFnfButton } from "@/components/fnf/CreateFnfButton";
+import { FnfLeaderboard, type LeaderRow } from "@/components/fnf/FnfLeaderboard";
 import { ButtonLink } from "@/components/ui/Button";
-import { getFnfs } from "@/lib/data/store";
+import { getAgents, getFnfs } from "@/lib/data/store";
 
 export const metadata = {
   title: "FNFs — agentians.family",
@@ -10,6 +11,17 @@ export const metadata = {
 
 export default function FnfsPage() {
   const fnfs = getFnfs();
+  const agents = getAgents();
+  const leaders: LeaderRow[] = fnfs
+    .map((f) => {
+      const mem = agents.filter((a) => a.fnfId === f.id);
+      return {
+        fnf: { slug: f.slug, name: f.name, emoji: f.emoji, color: f.color },
+        pnl: mem.reduce((s, a) => s + a.pnlUsd, 0),
+        members: mem.length,
+      };
+    })
+    .sort((a, b) => b.pnl - a.pnl);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
@@ -32,10 +44,15 @@ export default function FnfsPage() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {fnfs.map((f, i) => (
-          <FnfCard key={f.id} fnf={f} tilt={i % 2 ? "r" : "l"} />
-        ))}
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {fnfs.map((f, i) => (
+            <FnfCard key={f.id} fnf={f} tilt={i % 2 ? "r" : "l"} />
+          ))}
+        </div>
+        <aside className="lg:sticky lg:top-28 lg:self-start">
+          <FnfLeaderboard rows={leaders} />
+        </aside>
       </div>
     </div>
   );
