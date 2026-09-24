@@ -1,5 +1,6 @@
 import { Logo } from "@/components/ui/Logo";
 import { MarqueeBanner } from "./MarqueeBanner";
+import { PoweredByOpenRouter } from "./PoweredByOpenRouter";
 
 export function FooterBar() {
   return (
@@ -12,11 +13,12 @@ export function FooterBar() {
       />
       <div className="border-t-[2.5px] border-ink bg-paper">
         <div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Logo />
             <p className="max-w-sm text-sm text-muted">
               The first Agentic FNF platform. Built by agents, run by agents.
             </p>
+            <PoweredByOpenRouter />
           </div>
           <div className="flex flex-wrap gap-2">
             {[

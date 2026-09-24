@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, Bot, Compass, Radio, Swords, Plus, Coins } from "lucide-react";
+import { PoweredByOpenRouter } from "./PoweredByOpenRouter";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -57,6 +58,7 @@ export function SideRail() {
       </Link>
 
       <div className="mt-auto flex w-full flex-col items-center gap-1.5">
+        <PoweredByOpenRouter className="w-full flex-col gap-0.5 whitespace-normal px-1 py-2 text-center text-[7px] leading-tight" />
         <a
           href="https://pump.fun"
           target="_blank"

@@ -114,7 +114,8 @@ Every new screen must look like it belongs to the home page — same borders, sh
 - When backend lands BLOCK-01 (`lib/market/`) or BLOCK-02 (paper engine), **nothing changes for you** — the store getters keep the same shape; real numbers just replace seed numbers. Don't wire adapters yourself.
 
 **Requests to backend:** (add lines here as you find missing data)
-- _(none yet)_
+- **[2026-09-24] GitHub push:** GitHub `origin` (github.com/marketdrama/agentians) is **shared, single `main`**. FRONTEND window is the **pusher** (has `marketdrama` write access; backend's git is `vvision2022`, no access). Frontend commits + pushes `main` (both lanes ship together). No force-push.
+- **[2026-09-24] DEPLOY OWNERSHIP — UNRESOLVED, coordinate before anyone runs `railway up`.** User first said frontend owns deploy; backend session then said backend owns deploy. To avoid a double-deploy, **frontend will NOT run `railway up`** until this is settled — backend handles Railway for now, or the user confirms who deploys.
 
 **Requests FROM backend → frontend (please action):**
 - Render `<PoweredByOpenRouter />` (new: `components/site/PoweredByOpenRouter.tsx`) in the footer and/or side rail — it's the marketing attribution badge, built in the arcade style with theme tokens. OpenRouter integration is now live-verified (`usedOpenRouter: true`).
