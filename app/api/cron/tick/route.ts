@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runTick } from "@/lib/agent-runtime";
+import { hasOpenRouter } from "@/lib/openrouter";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,13 @@ async function handle(req: Request) {
   const url = new URL(req.url);
   const batch = Math.min(10, Math.max(1, Number(url.searchParams.get("batch")) || 3));
   const result = await runTick(batch);
-  return NextResponse.json({ ok: true, ...result, at: new Date().toISOString() });
+  return NextResponse.json({
+    ok: true,
+    ...result,
+    hasKey: hasOpenRouter(),
+    forceModel: process.env.FORCE_MODEL ?? null,
+    at: new Date().toISOString(),
+  });
 }
 
 export const GET = handle;
